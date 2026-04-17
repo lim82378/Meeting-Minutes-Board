@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>회의록 등록 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body { background-color: #f8f9fa; color: #333; font-family: 'Pretendard', sans-serif; }
+
+        /* 상단 포인트 바 */
+        .top-bar { height: 5px; background: linear-gradient(to right, #ff7e36, #ffb84d); width: 100%; position: fixed; top: 0; z-index: 1000; }
+
+        .main-container { max-width: 900px; margin: 80px auto; }
+        
+        /* 카드 디자인: 목록과 동일한 스타일 */
+        .content-card { 
+            border: 1px solid #e9ecef; border-radius: 12px; background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 40px;
+        }
+
+        /* 폼 라벨 및 입력창 스타일 */
+        .form-label { color: #555; font-size: 0.95rem; margin-bottom: 8px; }
+        .form-control { 
+            border-radius: 6px; border: 1px solid #ddd; padding: 12px 15px; 
+            transition: all 0.2s; font-size: 0.95rem;
+        }
+        .form-control:focus { border-color: #ff7e36; box-shadow: 0 0 8px rgba(255, 126, 54, 0.1); outline: none; }
+
+        /* 주황색 포인트 버튼 */
+        .btn-orange { background-color: #ff7e36; color: white; border-radius: 6px; font-weight: 600; border: none; padding: 12px 25px; transition: 0.2s; }
+        .btn-orange:hover { background-color: #e66a20; color: white; }
+        
+        .btn-outline-orange { border: 1px solid #ff7e36; color: #ff7e36; border-radius: 6px; font-weight: 600; padding: 12px 25px; background: transparent; }
+        .btn-outline-orange:hover { background-color: #ff7e36; color: white; }
+
+        /* 참석자 배지 스타일 */
+        #attendeeBadgeContainer { border: 1px solid #eee; background-color: #fafafa; border-radius: 8px; min-height: 60px; }
+        .badge-attendee { 
+            background-color: #fff0e6; color: #ff7e36; border: 1px solid #ffe0cc;
+            padding: 8px 15px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
+            display: flex; align-items: center;
+        }
+        .btn-remove-attendee { background: none; border: none; color: #ff7e36; margin-left: 8px; padding: 0; line-height: 1; font-size: 1rem; }
+
+        /* 헤더 언더라인 */
+        .section-title { border-left: 4px solid #ff7e36; padding-left: 15px; margin-bottom: 25px; font-weight: 800; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="top-bar"></div>
+    <div class="container main-container">
+        <div class="content-card">
+            <div class="mb-4 pb-3 border-bottom d-flex align-items-center">
+                <i class="bi bi-pencil-square text-orange fs-3 me-3" style="color:#ff7e36;"></i>
+                <div>
+                    <h4 class="fw-bold mb-0">회의록 등록</h4>
+                    <p class="text-muted small mb-0 mt-1">새로운 회의 내용을 기록하고 파일을 첨부하세요.</p>
+                </div>
+            </div>
+
+            <form id="registerForm">
+                <div class="section-title">기본 정보</div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">회의 제목</label>
+                    <input type="text" class="form-control" id="title" maxlength="200" placeholder="회의의 핵심 주제를 입력하세요" required>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">회의 일시</label>
+                        <input type="datetime-local" class="form-control" id="meetingDate" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">회의 장소</label>
+                        <input type="text" class="form-control" id="location" maxlength="100" placeholder="회의실 또는 장소">
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">작성자 사번</label>
+                        <input type="text" class="form-control" id="emplno" maxlength="50" placeholder="사번을 입력하세요" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">작성자 이름</label>
+                        <input type="text" class="form-control" id="emplnm" maxlength="100" placeholder="성함을 입력하세요" required>
+                    </div>
+                </div>
+
+                <div class="section-title">참석자 명단</div>
+                <div class="mb-4">
+                    <div class="input-group mb-3">
+                        <input type="text" id="attendeeInput" class="form-control" placeholder="참석자 이름을 입력하고 추가 버튼 클릭">
+                        <button class="btn btn-orange" type="button" id="addAttendeeBtn" style="padding: 0 25px;">추가</button>
+                    </div>
+                    <div id="attendeeBadgeContainer" class="p-3 d-flex flex-wrap gap-2">
+                        </div>
+                </div>
+        
+                <div class="section-title">회의 상세 내용</div>
+                <div class="mb-4">
+                    <textarea class="form-control" id="content" maxlength="3000" rows="10" placeholder="회의의 주요 안건 및 결정 사항을 상세히 입력하세요"></textarea>
+                </div>
+
+                <div class="mb-5">
+                    <label class="form-label fw-bold"><i class="bi bi-paperclip me-1"></i>첨부파일 (PDF)</label>
+                    <input type="file" class="form-control" id="attachedFile" accept=".pdf">
+                    <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i>최대 1개, 10MB 이내의 PDF 파일만 업로드 가능합니다.</div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 pt-4 border-top">
+                    <button type="button" class="btn btn-outline-orange" id="cancelBtn">취소하기</button>
+                    <button type="button" class="btn btn-orange shadow-sm" id="saveBtn">회의록 등록하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let attendeeList = [];
+        
+        $(document).ready(function() {
+            // 엔터키 및 클릭 이벤트 연결  
+            $('#addAttendeeBtn').click(addAttendee);
+            $('#attendeeInput').keypress(e => { if(e.which == 13) { e.preventDefault(); addAttendee(); } });
+            
+			//등록하기
+            $('#saveBtn').on('click', function() {
+				const $btn = $(this);
+				
+                // 기본 유효성 검사  
+                if(!$('#title').val().trim()) { alert('제목을 입력해주세요.'); $('#title').focus(); return; }
+                if(!$('#meetingDate').val()) { alert('회의 일시를 선택해주세요.'); $('#meetingDate').focus(); return; }
+                if(!$('#emplno').val().trim()) { alert('사번을 입력해주세요.'); $('#emplno').focus(); return; }
+                if(!$('#emplnm').val().trim()) { alert('이름을 입력해주세요.'); $('#emplnm').focus(); return; }
+				
+				$btn.prop('disabled', true).text('등록 중...');
+				
+                // 파일 검사 (PDF 및 용량)
+                const fileInput = $('#attachedFile')[0];
+                const file = fileInput.files[0];
+
+                if(file) {
+                    // 파일 확장자 체크(PDF)
+                    if (file.type !== "application/pdf") {
+                        alert("PDF 파일만 업로드 가능합니다.");
+                        $('#attachedFile').val('');
+                        return;
+                    }
+                    // 파일 크기 체크
+                    if (file.size > 10 * 1024 * 1024) { // 10MB
+                        alert("파일 용량이 10MB를 초과했습니다.");
+                        $('#attachedFile').val('');
+                        return;
+                    }
+                    //파일명 길이 체크
+                    if (file.name.length > 255) {
+                        alert("파일명이 너무 길어 업로드할 수 없습니다. (255자 이내)");
+                        $('#attachedFile').val('');
+                        return;
+                    }
+                }
+
+                // FormData 조립
+                let formData = new FormData();
+                formData.append("title", $('#title').val());
+                formData.append("meetingDate", $('#meetingDate').val());
+                formData.append("location", $('#location').val());
+                formData.append("emplno", $('#emplno').val());
+                formData.append("emplnm", $('#emplnm').val());
+                formData.append("content", $('#content').val());
+                
+                if(file) {
+                    formData.append("file", file);
+                }
+
+                // Ajax 요청  
+                $.ajax({
+                    type: 'POST',
+                    url: '/meet/api/meetings',
+                    processData: false, 
+                    contentType: false, 
+                    data: formData,
+                    success: function(response) {
+                        const newMeetingId = response.id; 
+
+                        if (attendeeList.length > 0) {
+                            $.ajax({
+                                type: 'POST',
+                                url: '/meet/api/meetings/attendees',
+                                contentType: 'application/json',
+                                data: JSON.stringify({
+                                    meetingId: newMeetingId,
+                                    names: attendeeList
+                                }),
+                                success: function() {
+                                    alert('회의록과 참석자 명단이 등록되었습니다.');
+                                    location.href = '/meet/meetings/list';
+                                },
+								error: function() {
+                                    alert('회의록은 등록되었으나, 참석자 명단 등록 중 오류가 발생했습니다.');
+                                    location.href = '/meet/meetings/list';
+                                }
+                            });
+                        } else {
+                            alert('회의록이 등록되었습니다.');
+                            location.href = '/meet/meetings/list';
+                        }
+                    },
+					error: function() {
+                        alert('서버 오류로 등록에 실패했습니다.');
+                        $btn.prop('disabled', false).text('회의록 등록하기');
+                    }
+                });
+            });
+            
+            //취소버튼 이벤트
+            $('#cancelBtn').click(function() {
+                location.href = '/meet/meetings/list';
+            });
+        });
+
+        // 배지 렌더링 함수 (디자인 수정, 민재님 로직 유지)
+        function renderAttendeeBadges() {
+            const container = $('#attendeeBadgeContainer');
+            container.empty();
+            attendeeList.forEach((name, index) => {
+                container.append(`
+                    <span class="badge-attendee">
+                        ${name}
+                        <button type="button" class="btn-remove-attendee" onclick="removeAttendee(${index})">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
+                `);
+            });
+        }
+        
+        // 이름 추가 함수  
+        function addAttendee() {
+            const name = $('#attendeeInput').val().trim();
+            if (name && !attendeeList.includes(name)) {
+                attendeeList.push(name);
+                $('#attendeeInput').val('');
+                renderAttendeeBadges();
+            }
+        }
+
+        // 이름 삭제 함수  
+        window.removeAttendee = function(index) {
+            attendeeList.splice(index, 1);
+            renderAttendeeBadges();
+        };
+    </script>
+</body>
+</html>

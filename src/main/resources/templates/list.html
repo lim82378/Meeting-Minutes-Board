@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>회의록 관리 시스템 - 목록</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body { background-color: #f8f9fa; color: #333; font-family: 'Pretendard', sans-serif; }
+
+        /* 상단 포인트 바 */
+        .top-bar { height: 5px; background: linear-gradient(to right, #ff7e36, #ffb84d); width: 100%; position: fixed; top: 0; z-index: 1000; }
+
+        .main-container { max-width: 1200px; margin: 30px auto; }
+        
+        /* 카드 디자인: 깔끔한 화이트보드 스타일 */
+        .content-card { 
+            border: 1px solid #e9ecef; border-radius: 12px; background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 25px 40px;
+            animation: fadeIn 0.5s;
+        }
+
+        /* 테이블 디자인: 선을 활용한 정돈된 느낌 */
+        .table { margin-bottom: 10px; }
+        .table thead th { 
+            background-color: #fff9f5; 
+            color: #ff7e36; 
+            border-bottom: 2px solid #ff7e36;
+            font-weight: 700;
+            padding: 15px 10px;
+        }
+        .table tbody td { 
+            padding: 18px 10px; 
+            border-bottom: 1px solid #f1f1f1;
+            border-right: 1px solid #f8f8f8; /* 은은한 세로선 */
+        }
+        .table tbody td:last-child { border-right: none; }
+        
+        /* 호버 효과: 깔끔하게 배경색만 변경 */
+        .table-hover tbody tr:hover { background-color: #fffbf8 !important; }
+
+        /* 버튼: 주황색 포인트 */
+        .btn-orange { background-color: #ff7e36; color: white; border-radius: 6px; font-weight: 600; border: none; transition: 0.2s; }
+        .btn-orange:hover { background-color: #e66a20; color: white; }
+        
+        .btn-outline-orange { border: 1px solid #ff7e36; color: #ff7e36; border-radius: 6px; font-weight: 600; background: transparent; }
+        .btn-outline-orange:hover { background-color: #ff7e36; color: white; }
+
+        /* 작성자 배지 */
+        .badge-author { background-color: #fff0e6; color: #ff7e36; padding: 5px 12px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; border: 1px solid #ffe0cc; }
+
+        /* 제목 링크 */
+        .meeting-title { color: #333; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .meeting-title:hover { color: #ff7e36; text-decoration: underline; }
+
+        /* 검색창 */
+        .search-input { border-radius: 6px 0 0 6px; border: 1px solid #ddd; padding: 10px 15px; }
+        .search-input:focus { border-color: #ff7e36; box-shadow: none; }
+        
+        /* 페이징 */
+        .pagination .page-link { color: #555; border: 1px solid #eee; margin: 0 2px; border-radius: 4px !important; }
+        .pagination .page-item.active .page-link { background-color: #ff7e36; border-color: #ff7e36; color: white; }
+    </style>
+</head>
+<body>
+    <div class="top-bar"></div>
+    <div class="container main-container">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <div>
+                    <h4 class="fw-bold mb-1"><i class="bi bi-clipboard-data text-orange me-2"></i>회의록 관리 시스템</h4>
+                    <p class="text-muted small mb-0">회의 기록을 투명하고 안전하게 관리합니다.</p>
+                </div>
+                <button class="btn btn-orange px-4" onclick="location.href='/meet/meetings/register'">
+                    <i class="bi bi-plus-circle me-1"></i>회의록 등록
+                </button>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-danger btn-sm px-3" id="multiDeleteBtn">선택 삭제</button>
+                    <button class="btn btn-outline-orange btn-sm px-3" id="goUpdateBtn">선택 수정</button>
+                </div>
+                <div class="input-group w-50">
+                    <input type="text" class="form-control search-input" id="searchInput" placeholder="회의 제목 검색">
+                    <button class="btn btn-orange" id="searchBtn" style="border-radius: 0 6px 6px 0;"><i class="bi bi-search"></i></button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 45px;"><input type="checkbox" id="checkAll" class="form-check-input"></th>
+                            <th style="width: 70px;">번호</th>
+                            <th>회의 제목</th>
+                            <th style="width: 110px;">작성자</th>
+                            <th style="width: 170px;">회의 일시</th>
+                            <th style="width: 120px;">등록일</th>
+                            <th style="width: 60px;">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meetingTableBody">
+                        </tbody>
+                </table>
+            </div>
+
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // 회의록 목록 뿌려주기 + 페이징 
+            loadMeetingList(0);
+            
+            // 검색 
+            $('#searchBtn').on('click', function() { loadMeetingList(0); });
+            
+            // 전체 선택/해제 
+            $('#checkAll').click(function() { $('.del-check').prop('checked', this.checked); });
+
+            // 다중 삭제 실행  
+            $('#multiDeleteBtn').click(function() {
+                let selectedIds = [];
+                $('.del-check:checked').each(function() { selectedIds.push($(this).val()); });
+                if(selectedIds.length === 0) { alert('삭제할 항목을 선택해주세요.'); return; }
+                const modifierName = prompt("삭제를 승인하는 성함을 입력하세요.");
+                if (!modifierName) return;
+                const data = { ids: selectedIds, modifierName: modifierName, modifierNo: "OFFICE_DEL" };
+                if(confirm('정말 삭제하시겠습니까?')) {
+                    $.ajax({
+                        type: 'PUT', 
+						url: '/meet/api/meetings/bulk-delete', 
+						contentType: 'application/json',
+                        data: JSON.stringify(data), 
+						success: function() { 
+							location.reload(); 
+						}
+                    });
+                }
+            });
+
+            // 선택 수정 페이지 이동
+            $('#goUpdateBtn').click(function() {
+                const selectedId = $('input[name="editSelect"]:checked').val();
+                if(!selectedId) { alert('수정할 항목을 선택해주세요.'); return; }
+                location.href = '/meet/meetings/update/' + selectedId;
+            });
+        });
+
+        // 리스트 로드 함수 
+        function loadMeetingList(page) {
+            const keyword = $('#searchInput').val();
+            $.ajax({
+                type: 'GET', 
+				url: '/meet/api/meetings', 
+				data: { 
+					page: page, 
+					keyword: keyword 
+				},
+                success: function(response) {
+                    renderTable(response.content, response.page);
+                    renderPagination(response.page);
+                }
+            });
+        }
+
+        // 테이블 렌더링 함수 
+        function renderTable(list, response) {
+            let html = '';
+            const totalElements = response.totalElements;
+            const size = response.size;
+            const number = response.number;
+
+            if (list.length === 0) {
+                html = '<tr><td colspan="7" class="text-center py-5 text-muted">등록된 데이터가 없습니다.</td></tr>';
+            } else {
+                list.forEach((item, index) => {
+                    let virtualNum = totalElements - (number * size) - index;
+                    let formattedDate = item.meetingDate.replace('T', ' ').substring(0, 16);
+                    html += `
+                        <tr class="animate__animated animate__fadeIn">
+                            <td><input type="checkbox" class="del-check form-check-input" value="${item.meetingId}" onclick="event.stopPropagation()"></td>
+                            <td class="text-muted small">${virtualNum}</td> 
+                            <td class="text-start ps-3">
+                                <span class="meeting-title" onclick="location.href='/meet/meetings/detail/${item.meetingId}'">${item.title}</span>
+                            </td>
+                            <td><span class="badge-author">${item.emplnm}</span></td>
+                            <td class="text-secondary small">${formattedDate}</td>
+                            <td class="text-secondary small">${item.createdAt.substring(0, 10)}</td>
+                            <td><input type="radio" name="editSelect" class="form-check-input" value="${item.meetingId}" onclick="event.stopPropagation()"></td>
+                        </tr>`;
+                });
+            }
+            $('#meetingTableBody').html(html);
+        }
+
+        // 페이징 처리 부분 
+        function renderPagination(response) {
+            let html = '';
+            const totalPages = response.totalPages; 
+            const currentPage = response.number;    
+            const prevPage = Math.max(0, currentPage - 1);
+            const nextPage = Math.min(totalPages - 1, currentPage + 1);
+
+            html += `<li class="page-item ${response.first ? 'disabled' : ''}"><a class="page-link" href="#" onclick="loadMeetingList(${prevPage})">이전</a></li>`;
+            for (let i = 0; i < totalPages; i++) {
+                html += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="loadMeetingList(${i})">${i + 1}</a></li>`;
+            }
+            html += `<li class="page-item ${response.last ? 'disabled' : ''}"><a class="page-link" href="#" onclick="loadMeetingList(${nextPage})">다음</a></li>`;
+            $('#pagination').html(html);
+        }
+    </script>
+</body>
+</html>

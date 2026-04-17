@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>회의록 상세보기</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body { background-color: #f8f9fa; color: #333; font-family: 'Pretendard', sans-serif; }
+
+        /* 상단 포인트 바 */
+        .top-bar { height: 5px; background: linear-gradient(to right, #ff7e36, #ffb84d); width: 100%; position: fixed; top: 0; z-index: 1000; }
+
+        .main-container { max-width: 1000px; margin: 80px auto; }
+        
+        /* 카드 디자인 */
+        .content-card { 
+            border: 1px solid #e9ecef; border-radius: 12px; background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 45px;
+        }
+
+        /* 정보 라벨 및 박스 스타일 */
+        .info-row { border-bottom: 1px solid #f1f1f1; padding: 15px 0; }
+        .info-label { width: 120px; font-weight: 700; color: #ff7e36; display: flex; align-items: center; }
+        
+        .content-box { 
+            min-height: 300px; 
+            background: #fffaf7; 
+            border: 1px solid #ffe0cc; 
+            padding: 25px; 
+            border-radius: 8px; 
+            white-space: pre-wrap; 
+            line-height: 1.6;
+            color: #444;
+        }
+
+        /* 참석자 배지 */
+        .badge-attendee { 
+            background-color: #fff0e6; color: #ff7e36; border: 1px solid #ffe0cc;
+            padding: 6px 14px; border-radius: 4px; font-weight: 600; font-size: 0.85rem;
+        }
+
+        /* 수정 이력 스타일 */
+        .history-box {
+            background-color: #fcfcfc;
+            border: 1px dashed #ddd;
+            border-left: 4px solid #ff7e36; 
+            padding: 20px;
+            font-size: 0.9rem;
+            margin-top: 30px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 버튼 스타일 */
+        .btn-orange { background-color: #ff7e36; color: white; border-radius: 6px; font-weight: 600; border: none; padding: 10px 30px; }
+        .btn-orange:hover { background-color: #e66a20; color: white; }
+        
+        .btn-outline-orange { border: 1px solid #ff7e36; color: #ff7e36; border-radius: 6px; font-weight: 600; padding: 10px 30px; background: transparent; }
+        .btn-outline-orange:hover { background-color: #ff7e36; color: white; }
+
+        /* 파일 섹션 */
+        .file-card { border: 1px solid #eee; background: #fff; border-radius: 10px; transition: 0.2s; }
+        .file-card:hover { border-color: #ff7e36; }
+
+        /* 섹션 타이틀 */
+        .section-title { border-left: 4px solid #ff7e36; padding-left: 15px; margin: 30px 0 15px 0; font-weight: 800; color: #333; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="top-bar"></div>
+    <div class="container main-container">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <h3 id="title" class="fw-bold mb-0 text-dark" style="letter-spacing: -1px;">회의록을 불러오는 중...</h3>
+                <button class="btn btn-outline-secondary btn-sm" onclick="location.href='/meet/meetings/list'">
+                    <i class="bi bi-list me-1"></i>목록으로
+                </button>
+            </div>
+            
+            <div class="row info-row">
+                <div class="col-md-6 d-flex">
+                    <div class="info-label"><i class="bi bi-calendar-event me-2"></i>회의 일시</div>
+                    <div id="meetingDate" class="fw-medium text-secondary"></div>
+                </div>
+                <div class="col-md-6 d-flex">
+                    <div class="info-label"><i class="bi bi-geo-alt me-2"></i>회의 장소</div>
+                    <div id="location" class="fw-medium text-secondary"></div>
+                </div>
+            </div>
+
+            <div class="row info-row">
+                <div class="col-md-6 d-flex">
+                    <div class="info-label"><i class="bi bi-person me-2"></i>작성자</div>
+                    <div id="emplInfo" class="fw-medium text-secondary"></div>
+                </div>
+                <div class="col-md-6 d-flex">
+                    <div class="info-label"><i class="bi bi-clock-history me-2"></i>등록일</div>
+                    <div id="createdAt" class="fw-medium text-secondary"></div>
+                </div>
+            </div>
+
+            <div class="section-title">참석자 명단</div>
+            <div id="attendeeList" class="d-flex flex-wrap gap-2 mb-4">
+                <span class="text-muted small">정보를 확인 중입니다...</span>
+            </div>
+
+            <div class="section-title">회의 상세 내용</div>
+            <div id="content" class="content-box mb-5"></div>
+
+            <div id="fileSection" style="display:none;">
+                <div class="section-title">첨부파일</div>
+                <div class="file-card p-3 d-flex align-items-center justify-content-between mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark-pdf-fill text-danger fs-3 me-3"></i>
+                        <span id="fileName" class="fw-bold text-secondary"></span>
+                    </div>
+                    <a href="#" id="downloadBtn" class="btn btn-outline-orange btn-sm">
+                        <i class="bi bi-download me-1"></i>다운로드
+                    </a>
+                </div>
+
+                <div id="pdfViewerSection" class="mt-4 mb-5" style="display:none;">
+                    <div class="border rounded-3 overflow-hidden bg-white shadow-sm" style="height: 600px;">
+                        <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <div id="historySection" class="history-box mb-5" style="display:none;">
+                <div class="text-muted">
+                    <span class="fw-bold text-dark"><i class="bi bi-info-circle me-1"></i>최근 수정 정보</span>
+                    <hr class="my-2" style="border-color: #eee;">
+                    <div class="d-flex gap-4">
+                        <div><strong>수정 일시:</strong> <span id="updatedAt"></span></div>
+                        <div><strong>수정자:</strong> <span id="modifierInfo"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3 pt-4 border-top">
+                <button class="btn btn-outline-orange px-5" id="editBtn">수정하기</button>
+                <button class="btn btn-danger px-5" id="deleteBtn" style="border-radius: 6px; font-weight: 600;">삭제하기</button>
+            </div>
+        </div>
+    </div>
+
+	<script>
+		$(document).ready(function() {
+		    const pathArray = window.location.pathname.split('/');
+		    const meetingId = pathArray[pathArray.length - 1];
+
+		    // 회의록 정보 가져오기  
+		    $.ajax({
+		        type: 'GET',
+		        url: '/meet/api/meetings/' + meetingId,
+		        success: function(data) {
+		            $('#title').text(data.title);
+		            $('#meetingDate').text(data.meetingDate ? data.meetingDate.replace('T', ' ') : '-');
+		            $('#location').text(data.location || '장소 정보 없음');
+		            $('#emplInfo').text(data.emplnm + " (" + data.emplno + ")"); 
+		            $('#createdAt').text(data.createdAt ? data.createdAt.substring(0, 10) : '-');
+		            $('#content').text(data.content);
+
+                    // 수정 이력 바인딩  
+                    if (data.modifierName) { 
+                        $('#historySection').show();
+                        $('#updatedAt').text(data.updatedAt ? data.updatedAt.replace('T', ' ').substring(0, 16) : '-');
+                        $('#modifierInfo').text(data.modifierName + " (" + data.modifierNo + ")");
+                    }
+					// 참석자 정보 가져오기
+					loadAttendees(meetingId);
+		            
+		            // 파일 정보 가져오기
+		            loadFileInfo(meetingId); 
+		        }
+		    });
+
+			// 수정 버튼 클릭 이벤트  
+		    $('#editBtn').click(function() {
+		        if (!meetingId) {
+		            alert("데이터를 불러오는 중입니다. 잠시만 기다려주세요.");
+		            return;
+		        }
+		        location.href = '/meet/meetings/update/' + meetingId;
+		    });
+
+			// 삭제 버튼 클릭 이벤트  
+			$('#deleteBtn').click(function() {
+			    if(!confirm("정말 이 회의록을 삭제하시겠습니까?")) return;
+
+			    const personName = prompt("삭제하시는 분의 성함을 입력해주세요.");
+
+			    if (personName === null) return; 
+			    if (personName.trim() === "") {
+			        alert("이름을 입력해야 삭제가 가능합니다.");
+			        return;
+			    }
+
+			    const deleteData = {
+			        modifierName: personName,
+			        modifierNo: "DELETE_REQ" 
+			    };
+
+			    $.ajax({
+			        type: 'PUT',
+			        url: '/meet/api/meetings/' + meetingId + '/delete',
+			        contentType: 'application/json',
+			        data: JSON.stringify(deleteData),
+			        success: function() {
+			            alert(personName + "님에 의해 회의록이 삭제 처리되었습니다.");
+			            location.href = '/meet/meetings/list';
+			        },
+			        error: function() {
+			            alert('삭제 처리 중 오류가 발생했습니다.');
+			        }
+			    });
+			});
+			
+		});
+
+		// 참석자 로드
+		function loadAttendees(meetingId) {
+		    $.ajax({
+		        type: 'GET',
+		        url: '/meet/api/meetings/' + meetingId + '/attendees',
+		        success: function(names) {
+		            const container = $('#attendeeList');
+		            container.empty();
+
+		            if (names && names.length > 0) {
+		                names.forEach(name => {
+		                    container.append(`<span class="badge-attendee">${name}</span>`);
+		                });
+		            } else {
+		                container.append('<span class="text-muted">참석자 없음</span>');
+		            }
+		        },
+		        error: function() {
+		            $('#attendeeList').html('<span class="text-danger">정보 로드 실패</span>');
+		        }
+		    });
+		}
+
+		// 파일 정보 로드  
+		function loadFileInfo(meetingId) {
+		    $.ajax({
+		        type: 'GET',
+		        url: '/meet/api/meetings/' + meetingId + '/file',
+		        success: function(file) {
+					if (file && file.attachId) {
+				        $('#fileSection').show();
+				        $('#fileName').text(file.originName); 
+						
+						const fileUrl = '/meet/api/meetings/files/download/' + file.attachId;
+						
+						$('#downloadBtn').attr('href', fileUrl);
+						$('#downloadBtn').attr('download', file.originName);
+						
+						$('#pdfViewerSection').show();
+						$('#pdfFrame').attr('src', fileUrl);
+				    }
+		        },
+		        error: function() {
+		            $('#fileSection').hide();
+					$('#pdfViewerSection').hide();
+		        }
+		    });
+		}
+	</script>
+</body>
+</html>
