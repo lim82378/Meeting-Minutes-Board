@@ -201,22 +201,26 @@
             }
             $('#meetingTableBody').html(html);
         }
-
-        // 페이징 처리 부분 
-        function renderPagination(response) {
+		
+		// 페이징 처리 부분 
+		function renderPagination(response) {
             let html = '';
             const totalPages = response.totalPages; 
             const currentPage = response.number;    
             const prevPage = Math.max(0, currentPage - 1);
             const nextPage = Math.min(totalPages - 1, currentPage + 1);
 
+			//이전
             html += `<li class="page-item ${response.first ? 'disabled' : ''}"><a class="page-link" href="#" onclick="loadMeetingList(${prevPage})">이전</a></li>`;
-            for (let i = 0; i < totalPages; i++) {
+            //번호
+			for (let i = 0; i < totalPages; i++) {
                 html += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="loadMeetingList(${i})">${i + 1}</a></li>`;
             }
+			//다음
             html += `<li class="page-item ${response.last ? 'disabled' : ''}"><a class="page-link" href="#" onclick="loadMeetingList(${nextPage})">다음</a></li>`;
             $('#pagination').html(html);
         }
+		
     </script>
 </body>
 </html>

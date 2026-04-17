@@ -58,7 +58,7 @@ public class MeetingRestController {
             @RequestParam(value = "page", defaultValue = "0") int page, 
             @RequestParam(value = "keyword", required = false) String keyword) {
         
-        Pageable pageable = PageRequest.of(page, 10);
+        Pageable pageable = PageRequest.of(page, 7);
         Page<MeetingDTO> resultPage;
         
         if (keyword != null && !keyword.isEmpty()) {
