@@ -152,8 +152,29 @@
 		$(document).ready(function() {
 		    const pathArray = window.location.pathname.split('/');
 		    const meetingId = pathArray[pathArray.length - 1];
-
-		    // 회의록 정보 가져오기  
+			
+			if (!meetingId) {
+		        alert("잘못된 접근입니다.");
+		        location.href = '/meet/meetings/list';
+		        return;
+		    }
+			// 회의록 정보
+			loadMeetingDetail(meetingId);
+			
+			// 참석자 정보
+			loadAttendees(meetingId);
+			
+			// 파일 정보
+			loadFileInfo(meetingId);
+			
+			// 이벤트 모음
+			bindEvents(meetingId);
+			
+		});
+		
+		// 회의록 정보 로드
+		function loadMeetingDetail(meetingId) { 
+			// 회의록 정보 가져오기  
 		    $.ajax({
 		        type: 'GET',
 		        url: '/meet/api/meetings/' + meetingId,
@@ -171,57 +192,14 @@
                         $('#updatedAt').text(data.updatedAt ? data.updatedAt.replace('T', ' ').substring(0, 16) : '-');
                         $('#modifierInfo').text(data.modifierName + " (" + data.modifierNo + ")");
                     }
-					// 참석자 정보 가져오기
-					loadAttendees(meetingId);
-		            
-		            // 파일 정보 가져오기
-		            loadFileInfo(meetingId); 
+		        },
+				error: function() {
+		            alert("데이터를 불러오는 중 오류가 발생했습니다.");
+					location.href = '/meet/meetings/list';
 		        }
 		    });
-
-			// 수정 버튼 클릭 이벤트  
-		    $('#editBtn').click(function() {
-		        if (!meetingId) {
-		            alert("데이터를 불러오는 중입니다. 잠시만 기다려주세요.");
-		            return;
-		        }
-		        location.href = '/meet/meetings/update/' + meetingId;
-		    });
-
-			// 삭제 버튼 클릭 이벤트  
-			$('#deleteBtn').click(function() {
-			    if(!confirm("정말 이 회의록을 삭제하시겠습니까?")) return;
-
-			    const personName = prompt("삭제하시는 분의 성함을 입력해주세요.");
-
-			    if (personName === null) return; 
-			    if (personName.trim() === "") {
-			        alert("이름을 입력해야 삭제가 가능합니다.");
-			        return;
-			    }
-
-			    const deleteData = {
-			        modifierName: personName,
-			        modifierNo: "DELETE_REQ" 
-			    };
-
-			    $.ajax({
-			        type: 'PUT',
-			        url: '/meet/api/meetings/' + meetingId + '/delete',
-			        contentType: 'application/json',
-			        data: JSON.stringify(deleteData),
-			        success: function() {
-			            alert(personName + "님에 의해 회의록이 삭제 처리되었습니다.");
-			            location.href = '/meet/meetings/list';
-			        },
-			        error: function() {
-			            alert('삭제 처리 중 오류가 발생했습니다.');
-			        }
-			    });
-			});
-			
-		});
-
+		}
+		
 		// 참석자 로드
 		function loadAttendees(meetingId) {
 		    $.ajax({
@@ -269,6 +247,50 @@
 					$('#pdfViewerSection').hide();
 		        }
 		    });
+		}
+		
+		//이벤트 바인딩
+		function bindEvents(meetingId) { 
+			// 수정 버튼 클릭 이벤트  
+		    $('#editBtn').click(function() {
+		        if (!meetingId) {
+		            alert("데이터를 불러오는 중입니다. 잠시만 기다려주세요.");
+		            return;
+		        }
+		        location.href = '/meet/meetings/update/' + meetingId;
+		    });
+
+			// 삭제 버튼 클릭 이벤트  
+			$('#deleteBtn').click(function() {
+			    if(!confirm("정말 이 회의록을 삭제하시겠습니까?")) return;
+
+			    const personName = prompt("삭제하시는 분의 성함을 입력해주세요.");
+
+			    if (personName === null) return; 
+			    if (personName.trim() === "") {
+			        alert("이름을 입력해야 삭제가 가능합니다.");
+			        return;
+			    }
+
+			    const deleteData = {
+			        modifierName: personName,
+			        modifierNo: "DELETE_REQ" 
+			    };
+
+			    $.ajax({
+			        type: 'PUT',
+			        url: '/meet/api/meetings/' + meetingId + '/delete',
+			        contentType: 'application/json',
+			        data: JSON.stringify(deleteData),
+			        success: function() {
+			            alert(personName + "님에 의해 회의록이 삭제 처리되었습니다.");
+			            location.href = '/meet/meetings/list';
+			        },
+			        error: function() {
+			            alert('삭제 처리 중 오류가 발생했습니다.');
+			        }
+			    });
+			});
 		}
 	</script>
 </body>

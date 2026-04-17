@@ -124,11 +124,76 @@
     <script>
         let attendeeList = [];
         
+		function validateFile(fileInput) { 
+			// 파일 검사 (PDF 및 용량)
+            const fileInput = $('#attachedFile')[0];
+            const file = fileInput.files[0];
+
+            if(file) {
+                // 파일 확장자 체크(PDF)
+                if (file.type !== "application/pdf") {
+                    alert("PDF 파일만 업로드 가능합니다.");
+                    $('#attachedFile').val('');
+                    return false;
+                }
+                // 파일 크기 체크
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    alert("파일 용량이 10MB를 초과했습니다.");
+                    $('#attachedFile').val('');
+                    return false;
+                }
+                //파일명 길이 체크
+                if (file.name.length > 255) {
+                    alert("파일명이 너무 길어 업로드할 수 없습니다. (255자 이내)");
+                    $('#attachedFile').val('');
+                    return false;
+                }
+            }
+			return true; // 문제 없으면 true
+		}
+		
+		// 배지 렌더링 함수 (디자인 수정, 민재님 로직 유지)
+        function renderAttendeeBadges() {
+            const container = $('#attendeeBadgeContainer');
+            container.empty();
+            attendeeList.forEach((name, index) => {
+                container.append(`
+                    <span class="badge-attendee">
+                        ${name}
+                        <button type="button" class="btn-remove-attendee" onclick="removeAttendee(${index})">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
+                `);
+            });
+        }
+        
+        // 이름 추가 함수  
+        function addAttendee() {
+            const name = $('#attendeeInput').val().trim();
+            if (name && !attendeeList.includes(name)) {
+                attendeeList.push(name);
+                $('#attendeeInput').val('');
+                renderAttendeeBadges();
+            }
+        }
+
+        // 이름 삭제 함수  
+        window.removeAttendee = function(index) {
+            attendeeList.splice(index, 1);
+            renderAttendeeBadges();
+        };
+		
         $(document).ready(function() {
             // 엔터키 및 클릭 이벤트 연결  
             $('#addAttendeeBtn').click(addAttendee);
             $('#attendeeInput').keypress(e => { if(e.which == 13) { e.preventDefault(); addAttendee(); } });
             
+			//파일 선택 시 검증
+			$('#attachedFile').on('change', function() {
+	            validateFile(this);
+	        });
+			
 			//등록하기
             $('#saveBtn').on('click', function() {
 				const $btn = $(this);
@@ -139,33 +204,10 @@
                 if(!$('#emplno').val().trim()) { alert('사번을 입력해주세요.'); $('#emplno').focus(); return; }
                 if(!$('#emplnm').val().trim()) { alert('이름을 입력해주세요.'); $('#emplnm').focus(); return; }
 				
-				$btn.prop('disabled', true).text('등록 중...');
+				if(!validateFile($('#attachedFile')[0])) return;
 				
-                // 파일 검사 (PDF 및 용량)
-                const fileInput = $('#attachedFile')[0];
-                const file = fileInput.files[0];
-
-                if(file) {
-                    // 파일 확장자 체크(PDF)
-                    if (file.type !== "application/pdf") {
-                        alert("PDF 파일만 업로드 가능합니다.");
-                        $('#attachedFile').val('');
-                        return;
-                    }
-                    // 파일 크기 체크
-                    if (file.size > 10 * 1024 * 1024) { // 10MB
-                        alert("파일 용량이 10MB를 초과했습니다.");
-                        $('#attachedFile').val('');
-                        return;
-                    }
-                    //파일명 길이 체크
-                    if (file.name.length > 255) {
-                        alert("파일명이 너무 길어 업로드할 수 없습니다. (255자 이내)");
-                        $('#attachedFile').val('');
-                        return;
-                    }
-                }
-
+				$btn.prop('disabled', true).text('등록 중...');
+                
                 // FormData 조립
                 let formData = new FormData();
                 formData.append("title", $('#title').val());
@@ -175,6 +217,7 @@
                 formData.append("emplnm", $('#emplnm').val());
                 formData.append("content", $('#content').val());
                 
+				const file = $('#attachedFile')[0].files[0];
                 if(file) {
                     formData.append("file", file);
                 }
@@ -224,38 +267,6 @@
                 location.href = '/meet/meetings/list';
             });
         });
-
-        // 배지 렌더링 함수 (디자인 수정, 민재님 로직 유지)
-        function renderAttendeeBadges() {
-            const container = $('#attendeeBadgeContainer');
-            container.empty();
-            attendeeList.forEach((name, index) => {
-                container.append(`
-                    <span class="badge-attendee">
-                        ${name}
-                        <button type="button" class="btn-remove-attendee" onclick="removeAttendee(${index})">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </span>
-                `);
-            });
-        }
-        
-        // 이름 추가 함수  
-        function addAttendee() {
-            const name = $('#attendeeInput').val().trim();
-            if (name && !attendeeList.includes(name)) {
-                attendeeList.push(name);
-                $('#attendeeInput').val('');
-                renderAttendeeBadges();
-            }
-        }
-
-        // 이름 삭제 함수  
-        window.removeAttendee = function(index) {
-            attendeeList.splice(index, 1);
-            renderAttendeeBadges();
-        };
     </script>
 </body>
 </html>

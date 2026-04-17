@@ -153,16 +153,9 @@
 
     <script>
         let attendeeList = [];
-        
-        $(document).ready(function() {
-            // URL에서 meetingId 추출 
-            const pathArray = window.location.pathname.split('/');
-            const meetingId = pathArray[pathArray.length - 1];
-            $('#meetingId').val(meetingId);
-            
-            // 이벤트 연결
-            $('#addAttendeeBtn').click(addAttendee);
-            $('#attendeeInput').keypress(e => { if(e.which == 13) { e.preventDefault(); addAttendee(); } });
+		let meetingId = '';
+		function loadInitialData() { 
+			
 
             // 초기 데이터 로딩 
             $.ajax({
@@ -185,6 +178,7 @@
                     if (file && file.originName) {
                         $('#currentFileName').html(`<i class="bi bi-file-earmark-pdf text-danger me-1"></i>${file.originName}`);
                         $('#deleteFileWrapper').show();
+						$('#deleteOldFile').prop('checked', false); // 체크박스 초기화
                     } else {
                         $('#currentFileName').text("첨부파일 없음");
                         $('#deleteFileWrapper').hide();
@@ -201,6 +195,47 @@
                     renderAttendeeBadges();
                 }
             });
+		}
+		
+		// 배지 렌더링 (디자인 수정)
+        function renderAttendeeBadges() {
+            const container = $('#attendeeBadgeContainer');
+            container.empty();
+            attendeeList.forEach((name, index) => {
+                container.append(`
+                    <span class="badge-attendee">
+                        ${name}
+                        <button type="button" class="btn-remove-attendee" onclick="removeAttendee(${index})">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </span>
+                `);
+            });
+        }
+
+        // 이름 추가 
+        function addAttendee() {
+            const name = $('#attendeeInput').val().trim();
+            if (name && !attendeeList.includes(name)) {
+                attendeeList.push(name);
+                $('#attendeeInput').val('');
+                renderAttendeeBadges();
+            }
+        }
+
+        // 이름 삭제 
+        window.removeAttendee = function(index) {
+            attendeeList.splice(index, 1);
+            renderAttendeeBadges();
+        };
+		
+        $(document).ready(function() {
+            // URL에서 meetingId 추출 
+            const pathArray = window.location.pathname.split('/');
+            meetingId = pathArray[pathArray.length - 1];
+            $('#meetingId').val(meetingId);
+            
+			loadInitialData();
             
             // 수정 실행 
             $('#updateBtn').on('click', function() {
@@ -260,42 +295,26 @@
             });
             
             //취소버튼 이벤트
-            $('#cancelBtn').click(function() {
-                location.href = '/meet/meetings/list';
-            });
+			$('#cancelBtn').click(function() {
+		        if(confirm("수정을 취소하시겠습니까? 변경사항이 저장되지 않습니다.")) {
+		            location.href = '/meet/meetings/detail/' + meetingId;
+		        }
+		    });
+			
+			$('#attachedFile').on('change', function() {
+		        const file = this.files[0];
+		        if (file && file.type !== "application/pdf") {
+		            alert("PDF 파일만 업로드 가능합니다.");
+		            $(this).val(''); 
+		        }
+		    });
+			
+			// 이벤트 연결
+            $('#addAttendeeBtn').click(addAttendee);
+            $('#attendeeInput').keypress(e => { if(e.which == 13) { e.preventDefault(); addAttendee(); } });
         });
         
-        // 배지 렌더링 (디자인 수정, 민재님 로직 유지)
-        function renderAttendeeBadges() {
-            const container = $('#attendeeBadgeContainer');
-            container.empty();
-            attendeeList.forEach((name, index) => {
-                container.append(`
-                    <span class="badge-attendee">
-                        ${name}
-                        <button type="button" class="btn-remove-attendee" onclick="removeAttendee(${index})">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </span>
-                `);
-            });
-        }
-
-        // 이름 추가 
-        function addAttendee() {
-            const name = $('#attendeeInput').val().trim();
-            if (name && !attendeeList.includes(name)) {
-                attendeeList.push(name);
-                $('#attendeeInput').val('');
-                renderAttendeeBadges();
-            }
-        }
-
-        // 이름 삭제 
-        window.removeAttendee = function(index) {
-            attendeeList.splice(index, 1);
-            renderAttendeeBadges();
-        };
+        
     </script>
 </body>
 </html>
