@@ -20,7 +20,7 @@
 
 ### 🛠 6. 기술 스택 (Tech Stack)
 * **Backend:** Java 17, Spring Boot, JPA, MariaDB, Lombok, Swagger
-* * **Frontend:** HTML/CSS, JavaScript, jQuery, Ajax, Bootstrap
+* **Frontend:** HTML/CSS, JavaScript, jQuery, Ajax, Bootstrap
 * **DevOps:** AWS Lightsail, Docker
 
 ### 🛠 7. 성장점과 느낀점 :
